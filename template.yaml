@@ -1,0 +1,71 @@
+#The template.yaml file in AWS SAM defines the architecture and resources of a serverless application using YAML syntax.
+
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  template for an HTTP API that creates, updates, and deletes items in DynamoDB
+  
+Globals:
+  Function:
+    Timeout: 10
+
+Resources:
+
+  # Create Lambda Function with function event.
+  DDBHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: products/  #path of index.mjs lambda function file 
+      Handler: index.handler  #file name of lamda function
+      Runtime: nodejs18.x
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ItemsTable
+      Events:
+        GetAllItems:
+          Type: HttpApi
+          Properties:
+            Path: /items
+            Method: GET
+        GetAnItem:
+          Type: HttpApi
+          Properties:
+            Path: /items/{id}
+            Method: GET
+      
+        SearchItems:
+          Type: HttpApi
+          Properties:
+            Path: /items/{attribute}/{attributeValue}
+            Method: GET
+
+
+        DeleteAnItem:
+          Type: HttpApi
+          Properties:
+            Path: /items/{id}
+            Method: DELETE
+        CreateOrUpdateItem:
+          Type: HttpApi
+          Properties:
+            Path: /items
+            Method: PUT
+
+  #Create AWS DynamoDB table
+  ItemsTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      TableName: products   # input your table name
+
+# ApiEndPoint and function Arn show us as output, using ApiEndPoint we can perform CRUD operation
+
+Outputs:
+  ApiEndpoint:
+    Description: "The invoke URL for our HTTP API"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/items"
+  Function:
+    Description: "DynamoDB handler function ARN"
+    Value: !GetAtt DDBHandlerFunction.Arn
