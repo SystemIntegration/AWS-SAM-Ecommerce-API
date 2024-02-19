@@ -1,4 +1,4 @@
-# AWS SAM Demo Project
+# AWS SAM E commerce API Demo Project
 
 ## Overview
 
